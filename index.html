@@ -6,17 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root{
-      --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg: linear-gradient(135deg, #772835 0%, #666666 100%);
       --card:#ffffff;
-      --text:#2c3e50;
-      --muted:#7f8c8d;
-      --accent:#3498db;
-      --accent-dark:#2980b9;
-      --border:#e1e8ed;
-      --success:#27ae60;
-      --warning:#f39c12;
-      --danger:#e74c3c;
-      --shadow: 0 10px 30px rgba(0,0,0,0.15);
+      --text:#666666;
+      --muted:#999999;
+      --accent:#772835;
+      --accent-dark:#5a1e28;
+      --border:#e1e1e1;
+      --success:#772835;
+      --warning:#772835;
+      --danger:#772835;
+      --shadow: 0 10px 30px rgba(119,40,53,0.15);
       --radius: 12px;
     }
     
@@ -61,7 +61,7 @@
       margin:0;
       font-size:1.8rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #772835, #666666);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -298,25 +298,25 @@
       border-radius:8px;
       font-weight:600;
       cursor:pointer;
-      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      box-shadow: 0 4px 12px rgba(119, 40, 53, 0.3);
       transition: all 0.2s ease;
       font-size: 14px;
     }
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+      box-shadow: 0 6px 16px rgba(119, 40, 53, 0.4);
     }
     
     .btn.secondary{
-      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-      box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+      background: linear-gradient(135deg, #666666, #555555);
+      box-shadow: 0 4px 12px rgba(102, 102, 102, 0.3);
     }
     .btn.secondary:hover {
-      box-shadow: 0 6px 16px rgba(149, 165, 166, 0.4);
+      box-shadow: 0 6px 16px rgba(102, 102, 102, 0.4);
     }
     
     .warning-badge {
-      background: var(--warning);
+      background: #772835;
       color: white;
       padding: 6px 12px;
       border-radius: 15px;
@@ -327,7 +327,7 @@
     }
     
     .success-badge {
-      background: var(--success);
+      background: #772835;
       color: white;
       padding: 6px 12px;
       border-radius: 15px;
@@ -342,7 +342,7 @@
       color:var(--muted);
       margin-top:10px;
       padding: 10px;
-      background: rgba(52, 152, 219, 0.1);
+      background: rgba(119, 40, 53, 0.1);
       border-radius: 6px;
       border-left: 4px solid var(--accent);
     }
@@ -786,8 +786,8 @@
           {
             label: 'Active Power (P)',
             data: chartData.pPowerPoints,
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderColor: '#772835',
+            backgroundColor: 'rgba(119, 40, 53, 0.1)',
             fill: false,
             tension: 0.1,
             borderWidth: 3
@@ -795,8 +795,8 @@
           {
             label: 'Reactive Power (Q)',
             data: chartData.qPowerPoints,
-            borderColor: '#e74c3c',
-            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            borderColor: '#666666',
+            backgroundColor: 'rgba(102, 102, 102, 0.1)',
             fill: false,
             tension: 0.1,
             borderWidth: 3
@@ -804,8 +804,8 @@
           {
             label: 'Apparent Power (S)',
             data: chartData.totalPowerPoints,
-            borderColor: '#27ae60',
-            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            borderColor: '#999999',
+            backgroundColor: 'rgba(153, 153, 153, 0.1)',
             fill: true,
             tension: 0.1,
             borderWidth: 2,
