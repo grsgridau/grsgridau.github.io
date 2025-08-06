@@ -474,12 +474,12 @@
           </div>
           <div class="stat">
             <div class="label">P Ramp Time</div>
-            <div class="value" id="pRampTimeValue">20</div>
+            <div class="value" id="pRampTimeDisplay">20</div>
             <div class="unit">seconds</div>
           </div>
           <div class="stat">
             <div class="label">Q Ramp Time</div>
-            <div class="value" id="qRampTimeValue">33</div>
+            <div class="value" id="qRampTimeDisplay">33</div>
             <div class="unit">seconds</div>
           </div>
         </div>
@@ -500,6 +500,11 @@
             <div class="label">Reactive Power</div>
             <div class="value" id="reactivePowerValue">33</div>
             <div class="unit">Mvar</div>
+          </div>
+          <div class="stat">
+            <div class="label">Apparent Power</div>
+            <div class="value" id="apparentPowerValue">105</div>
+            <div class="unit">MVA</div>
           </div>
           <div class="stat">
             <div class="label">Total Ramp Time</div>
@@ -704,10 +709,11 @@
       // Update statistics
       document.getElementById('activePowerValue').textContent = formatNumber(state.plantSize);
       document.getElementById('reactivePowerValue').textContent = formatNumber(reactivePower);
+      document.getElementById('apparentPowerValue').textContent = formatNumber(apparentPower);
       document.getElementById('pRampRateDisplay').textContent = formatNumber(state.pRampRate, 2);
       document.getElementById('qRampRateDisplay').textContent = formatNumber(state.qRampRate, 2);
-      document.getElementById('pRampTimeValue').textContent = formatNumber(pRampTime);
-      document.getElementById('qRampTimeValue').textContent = formatNumber(qRampTime);
+      document.getElementById('pRampTimeDisplay').textContent = formatNumber(pRampTime);
+      document.getElementById('qRampTimeDisplay').textContent = formatNumber(qRampTime);
       document.getElementById('totalTimeValue').textContent = formatNumber(totalRampTime);
       document.getElementById('pqRatioValue').textContent = formatNumber(state.pRampRate / state.qRampRate, 2);
 
