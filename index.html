@@ -384,18 +384,52 @@
         </div>
 
         <div class="field">
-          <label>Active Power Ramp Rate (%/sec)</label>
-          <div class="slider-container">
-            <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.01">
-            <input type="text" id="pRampRateValue" class="slider-value-input" value="5.00 %/s">
+          <label>Control Mode</label>
+          <div class="input-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="radio" name="controlMode" value="rate" checked>
+              <span>Set Ramp Rate (%/sec)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="radio" name="controlMode" value="time">
+              <span>Set Ramp Time (seconds)</span>
+            </label>
           </div>
         </div>
 
-        <div class="field">
-          <label>Reactive Power Ramp Rate (%/sec)</label>
-          <div class="slider-container">
-            <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.01">
-            <input type="text" id="qRampRateValue" class="slider-value-input" value="3.00 %/s">
+        <div id="rateControls">
+          <div class="field">
+            <label>Active Power Ramp Rate (%/sec)</label>
+            <div class="slider-container">
+              <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.01">
+              <input type="text" id="pRampRateValue" class="slider-value-input" value="5.00 %/s">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Reactive Power Ramp Rate (%/sec)</label>
+            <div class="slider-container">
+              <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.01">
+              <input type="text" id="qRampRateValue" class="slider-value-input" value="3.00 %/s">
+            </div>
+          </div>
+        </div>
+
+        <div id="timeControls" style="display: none;">
+          <div class="field">
+            <label>Active Power Ramp Time (seconds)</label>
+            <div class="slider-container">
+              <input type="range" id="pRampTime" class="slider" min="5" max="300" value="20" step="1">
+              <input type="text" id="pRampTimeValue" class="slider-value-input" value="20 sec">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Reactive Power Ramp Time (seconds)</label>
+            <div class="slider-container">
+              <input type="range" id="qRampTime" class="slider" min="5" max="300" value="33" step="1">
+              <input type="text" id="qRampTimeValue" class="slider-value-input" value="33 sec">
+            </div>
           </div>
         </div>
 
@@ -429,14 +463,14 @@
         
         <div class="stats-grid">
           <div class="stat">
-            <div class="label">Active Power</div>
-            <div class="value" id="activePowerValue">100</div>
-            <div class="unit">MW</div>
+            <div class="label">P Ramp Rate</div>
+            <div class="value" id="pRampRateDisplay">5.00</div>
+            <div class="unit">%/s</div>
           </div>
           <div class="stat">
-            <div class="label">Reactive Power</div>
-            <div class="value" id="reactivePowerValue">33</div>
-            <div class="unit">Mvar</div>
+            <div class="label">Q Ramp Rate</div>
+            <div class="value" id="qRampRateDisplay">3.00</div>
+            <div class="unit">%/s</div>
           </div>
           <div class="stat">
             <div class="label">P Ramp Time</div>
@@ -458,6 +492,16 @@
 
         <div class="stats-grid">
           <div class="stat">
+            <div class="label">Active Power</div>
+            <div class="value" id="activePowerValue">100</div>
+            <div class="unit">MW</div>
+          </div>
+          <div class="stat">
+            <div class="label">Reactive Power</div>
+            <div class="value" id="reactivePowerValue">33</div>
+            <div class="unit">Mvar</div>
+          </div>
+          <div class="stat">
             <div class="label">Total Ramp Time</div>
             <div class="value" id="totalTimeValue">33</div>
             <div class="unit">seconds</div>
@@ -466,16 +510,6 @@
             <div class="label">P/Q Ratio</div>
             <div class="value" id="pqRatioValue">1.67</div>
             <div class="unit">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Power Factor</div>
-            <div class="value" id="displayPfValue">0.95</div>
-            <div class="unit">leading/lagging</div>
-          </div>
-          <div class="stat">
-            <div class="label">Apparent Power</div>
-            <div class="value" id="apparentPowerValue">105</div>
-            <div class="unit">MVA</div>
           </div>
         </div>
       </section>
@@ -490,7 +524,10 @@
       powerFactor: 0.95,
       pRampRate: 5.00,
       qRampRate: 3.00,
-      direction: 'down'
+      pRampTime: 20,
+      qRampTime: 33,
+      direction: 'down',
+      controlMode: 'rate'
     };
 
     let rampChart = null;
@@ -517,8 +554,20 @@
     function updateSliderValues() {
       document.getElementById('plantSizeValue').textContent = `${state.plantSize} MW`;
       document.getElementById('powerFactorValue').textContent = formatNumber(state.powerFactor, 2);
-      document.getElementById('pRampRateValue').value = `${formatNumber(state.pRampRate, 2)} %/s`;
-      document.getElementById('qRampRateValue').value = `${formatNumber(state.qRampRate, 2)} %/s`;
+      
+      if (state.controlMode === 'rate') {
+        document.getElementById('pRampRateValue').value = `${formatNumber(state.pRampRate, 2)} %/s`;
+        document.getElementById('qRampRateValue').value = `${formatNumber(state.qRampRate, 2)} %/s`;
+      } else {
+        document.getElementById('pRampTimeValue').value = `${formatNumber(state.pRampTime, 0)} sec`;
+        document.getElementById('qRampTimeValue').value = `${formatNumber(state.qRampTime, 0)} sec`;
+        
+        // Calculate and update the rate displays (for informational purposes)
+        const calculatedPRate = 100 / state.pRampTime;
+        const calculatedQRate = 100 / state.qRampTime;
+        state.pRampRate = calculatedPRate;
+        state.qRampRate = calculatedQRate;
+      }
     }
 
     // Parse value from editable slider value input
@@ -528,26 +577,55 @@
       return match ? parseFloat(match[1]) : null;
     }
 
+    // Parse time value from editable input
+    function parseTimeValue(inputValue) {
+      // Extract number from "20 sec" format
+      const match = inputValue.match(/^([0-9]*\.?[0-9]+)/);
+      return match ? parseFloat(match[1]) : null;
+    }
+
     // Update state from editable value input
     function updateFromValueInput(element, isP = true) {
-      const rawValue = element.value;
-      const numericValue = parseRampRateValue(rawValue);
-      
-      if (numericValue !== null) {
-        const clampedValue = clamp(numericValue, 0.1, 20);
-        const roundedValue = Math.round(clampedValue * 100) / 100;
+      if (state.controlMode === 'rate') {
+        const rawValue = element.value;
+        const numericValue = parseRampRateValue(rawValue);
         
-        if (isP) {
-          state.pRampRate = roundedValue;
-          document.getElementById('pRampRate').value = roundedValue;
-        } else {
-          state.qRampRate = roundedValue;
-          document.getElementById('qRampRate').value = roundedValue;
+        if (numericValue !== null) {
+          const clampedValue = clamp(numericValue, 0.1, 20);
+          const roundedValue = Math.round(clampedValue * 100) / 100;
+          
+          if (isP) {
+            state.pRampRate = roundedValue;
+            document.getElementById('pRampRate').value = roundedValue;
+          } else {
+            state.qRampRate = roundedValue;
+            document.getElementById('qRampRate').value = roundedValue;
+          }
+          
+          updateSliderValues();
+          calculateRampProfile();
+          updateChart();
         }
+      } else {
+        const rawValue = element.value;
+        const numericValue = parseTimeValue(rawValue);
         
-        updateSliderValues();
-        calculateRampProfile();
-        updateChart();
+        if (numericValue !== null) {
+          const clampedValue = clamp(numericValue, 5, 300);
+          const roundedValue = Math.round(clampedValue);
+          
+          if (isP) {
+            state.pRampTime = roundedValue;
+            document.getElementById('pRampTime').value = roundedValue;
+          } else {
+            state.qRampTime = roundedValue;
+            document.getElementById('qRampTime').value = roundedValue;
+          }
+          
+          updateSliderValues();
+          calculateRampProfile();
+          updateChart();
+        }
       }
     }
 
@@ -556,20 +634,32 @@
       const reactivePower = calculateReactivePower(state.plantSize, state.powerFactor);
       const apparentPower = calculateApparentPower(state.plantSize, reactivePower);
       
-      // Calculate ramp times (time to go from 100% to 0% or vice versa)
-      const pRampTime = 100 / state.pRampRate; // seconds
-      const qRampTime = 100 / state.qRampRate; // seconds
+      // Calculate ramp times and rates based on control mode
+      let pRampTime, qRampTime;
+      
+      if (state.controlMode === 'rate') {
+        // Calculate time from rate (time to go from 100% to 0% or vice versa)
+        pRampTime = 100 / state.pRampRate; // seconds
+        qRampTime = 100 / state.qRampRate; // seconds
+      } else {
+        // Use time directly and calculate rates
+        pRampTime = state.pRampTime;
+        qRampTime = state.qRampTime;
+        state.pRampRate = 100 / pRampTime;
+        state.qRampRate = 100 / qRampTime;
+      }
+      
       const totalRampTime = Math.max(pRampTime, qRampTime);
 
       // Update statistics
       document.getElementById('activePowerValue').textContent = formatNumber(state.plantSize);
       document.getElementById('reactivePowerValue').textContent = formatNumber(reactivePower);
+      document.getElementById('pRampRateDisplay').textContent = formatNumber(state.pRampRate, 2);
+      document.getElementById('qRampRateDisplay').textContent = formatNumber(state.qRampRate, 2);
       document.getElementById('pRampTimeValue').textContent = formatNumber(pRampTime);
       document.getElementById('qRampTimeValue').textContent = formatNumber(qRampTime);
       document.getElementById('totalTimeValue').textContent = formatNumber(totalRampTime);
       document.getElementById('pqRatioValue').textContent = formatNumber(state.pRampRate / state.qRampRate, 2);
-      document.getElementById('displayPfValue').textContent = formatNumber(state.powerFactor, 2);
-      document.getElementById('apparentPowerValue').textContent = formatNumber(apparentPower);
 
       // Update status badges
       const statusContainer = document.getElementById('rampStatus');
@@ -763,6 +853,27 @@
         updateChart();
       });
 
+      // Control mode toggle
+      document.querySelectorAll('input[name="controlMode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.controlMode = e.target.value;
+          
+          // Show/hide appropriate controls
+          if (state.controlMode === 'rate') {
+            document.getElementById('rateControls').style.display = 'block';
+            document.getElementById('timeControls').style.display = 'none';
+          } else {
+            document.getElementById('rateControls').style.display = 'none';
+            document.getElementById('timeControls').style.display = 'block';
+          }
+          
+          updateSliderValues();
+          calculateRampProfile();
+          updateChart();
+        });
+      });
+
+      // Rate Mode Controls
       // P Ramp Rate - Slider
       document.getElementById('pRampRate').addEventListener('input', (e) => {
         state.pRampRate = Math.round(parseFloat(e.target.value) * 100) / 100;
@@ -801,6 +912,45 @@
         }
       });
 
+      // Time Mode Controls
+      // P Ramp Time - Slider
+      document.getElementById('pRampTime').addEventListener('input', (e) => {
+        state.pRampTime = parseInt(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+
+      // P Ramp Time - Editable Value Display
+      document.getElementById('pRampTimeValue').addEventListener('blur', (e) => {
+        updateFromValueInput(e.target, true);
+      });
+
+      document.getElementById('pRampTimeValue').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur(); // Trigger blur event to update value
+        }
+      });
+
+      // Q Ramp Time - Slider
+      document.getElementById('qRampTime').addEventListener('input', (e) => {
+        state.qRampTime = parseInt(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+
+      // Q Ramp Time - Editable Value Display
+      document.getElementById('qRampTimeValue').addEventListener('blur', (e) => {
+        updateFromValueInput(e.target, false);
+      });
+
+      document.getElementById('qRampTimeValue').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur(); // Trigger blur event to update value
+        }
+      });
+
       document.querySelectorAll('input[name="direction"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
           state.direction = e.target.value;
@@ -820,7 +970,10 @@
           powerFactor: 0.95,
           pRampRate: 5.00,
           qRampRate: 3.00,
-          direction: 'down'
+          pRampTime: 20,
+          qRampTime: 33,
+          direction: 'down',
+          controlMode: 'rate'
         };
         
         // Update sliders
@@ -828,7 +981,14 @@
         document.getElementById('powerFactor').value = state.powerFactor;
         document.getElementById('pRampRate').value = state.pRampRate;
         document.getElementById('qRampRate').value = state.qRampRate;
+        document.getElementById('pRampTime').value = state.pRampTime;
+        document.getElementById('qRampTime').value = state.qRampTime;
         document.querySelector('input[name="direction"][value="down"]').checked = true;
+        document.querySelector('input[name="controlMode"][value="rate"]').checked = true;
+        
+        // Reset visibility
+        document.getElementById('rateControls').style.display = 'block';
+        document.getElementById('timeControls').style.display = 'none';
         
         updateSliderValues();
         calculateRampProfile();
