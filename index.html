@@ -371,7 +371,7 @@
           <label>Plant Size (MW)</label>
           <div class="slider-container">
             <input type="range" id="plantSize" class="slider" min="1" max="1000" value="100" step="1">
-            <div class="slider-value" id="plantSizeValue">100 MW</div>
+            <input type="text" id="plantSizeValue" class="slider-value-input" value="100 MW">
           </div>
         </div>
 
@@ -379,7 +379,7 @@
           <label>Power Factor</label>
           <div class="slider-container">
             <input type="range" id="powerFactor" class="slider" min="0.7" max="1.0" value="0.95" step="0.01">
-            <div class="slider-value" id="powerFactorValue">0.95</div>
+            <input type="text" id="powerFactorValue" class="slider-value-input" value="0.95">
           </div>
         </div>
 
@@ -552,8 +552,8 @@
 
     // Update slider values display
     function updateSliderValues() {
-      document.getElementById('plantSizeValue').textContent = `${state.plantSize} MW`;
-      document.getElementById('powerFactorValue').textContent = formatNumber(state.powerFactor, 2);
+      document.getElementById('plantSizeValue').value = `${state.plantSize} MW`;
+      document.getElementById('powerFactorValue').value = formatNumber(state.powerFactor, 2);
       
       if (state.controlMode === 'rate') {
         document.getElementById('pRampRateValue').value = `${formatNumber(state.pRampRate, 2)} %/s`;
@@ -580,6 +580,20 @@
     // Parse time value from editable input
     function parseTimeValue(inputValue) {
       // Extract number from "20 sec" format
+      const match = inputValue.match(/^([0-9]*\.?[0-9]+)/);
+      return match ? parseFloat(match[1]) : null;
+    }
+
+    // Parse plant size value from editable input
+    function parsePlantSizeValue(inputValue) {
+      // Extract number from "100 MW" format
+      const match = inputValue.match(/^([0-9]*\.?[0-9]+)/);
+      return match ? parseFloat(match[1]) : null;
+    }
+
+    // Parse power factor value from editable input
+    function parsePowerFactorValue(inputValue) {
+      // Extract number from "0.95" format
       const match = inputValue.match(/^([0-9]*\.?[0-9]+)/);
       return match ? parseFloat(match[1]) : null;
     }
@@ -626,6 +640,42 @@
           calculateRampProfile();
           updateChart();
         }
+      }
+    }
+
+    // Update plant size from editable input
+    function updatePlantSizeFromInput(element) {
+      const rawValue = element.value;
+      const numericValue = parsePlantSizeValue(rawValue);
+      
+      if (numericValue !== null) {
+        const clampedValue = clamp(numericValue, 1, 1000);
+        const roundedValue = Math.round(clampedValue);
+        
+        state.plantSize = roundedValue;
+        document.getElementById('plantSize').value = roundedValue;
+        
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      }
+    }
+
+    // Update power factor from editable input
+    function updatePowerFactorFromInput(element) {
+      const rawValue = element.value;
+      const numericValue = parsePowerFactorValue(rawValue);
+      
+      if (numericValue !== null) {
+        const clampedValue = clamp(numericValue, 0.7, 1.0);
+        const roundedValue = Math.round(clampedValue * 100) / 100;
+        
+        state.powerFactor = roundedValue;
+        document.getElementById('powerFactor').value = roundedValue;
+        
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
       }
     }
 
@@ -839,6 +889,7 @@
 
     // Event listeners for sliders
     function setupEventListeners() {
+      // Plant Size - Slider
       document.getElementById('plantSize').addEventListener('input', (e) => {
         state.plantSize = parseFloat(e.target.value);
         updateSliderValues();
@@ -846,11 +897,34 @@
         updateChart();
       });
 
+      // Plant Size - Editable Value Display
+      document.getElementById('plantSizeValue').addEventListener('blur', (e) => {
+        updatePlantSizeFromInput(e.target);
+      });
+
+      document.getElementById('plantSizeValue').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur(); // Trigger blur event to update value
+        }
+      });
+
+      // Power Factor - Slider
       document.getElementById('powerFactor').addEventListener('input', (e) => {
         state.powerFactor = parseFloat(e.target.value);
         updateSliderValues();
         calculateRampProfile();
         updateChart();
+      });
+
+      // Power Factor - Editable Value Display
+      document.getElementById('powerFactorValue').addEventListener('blur', (e) => {
+        updatePowerFactorFromInput(e.target);
+      });
+
+      document.getElementById('powerFactorValue').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur(); // Trigger blur event to update value
+        }
       });
 
       // Control mode toggle
