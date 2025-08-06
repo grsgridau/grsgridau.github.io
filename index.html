@@ -2,135 +2,745 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Power Plant Ramp Rate</title>
+  <title>Power Plant Ramp Rate Optimizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 0 10px; }
-    .control-group { margin-bottom: 20px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input[type=range] { width: 100%; }
-    .value { font-weight: bold; }
-    #chartContainer { width: 100%; height: 400px; }
+    :root{
+      --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --card:#ffffff;
+      --text:#2c3e50;
+      --muted:#7f8c8d;
+      --accent:#3498db;
+      --accent-dark:#2980b9;
+      --border:#e1e8ed;
+      --success:#27ae60;
+      --warning:#f39c12;
+      --danger:#e74c3c;
+      --shadow: 0 10px 30px rgba(0,0,0,0.15);
+      --radius: 12px;
+    }
+    
+    /* Global layout safety: prevent bleed and enable scrollbars */
+    html, body {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      overflow-x: hidden;   /* no horizontal bleed */
+      overflow-y: auto;     /* allow vertical scrolling */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header{
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 30px;
+    }
+    header h1{
+      margin:0;
+      font-size:2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p{
+      margin:10px 0 0 0;
+      opacity:.8;
+      font-size: 1.1rem;
+    }
+    
+    main{
+      display:grid;
+      gap:30px;
+      grid-template-columns: 400px 1fr;
+    }
+    @media (max-width: 1200px){
+      main{grid-template-columns:1fr}
+    }
+    
+    .card{
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:25px;
+      box-shadow:var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    
+    .card h2{
+      margin:0 0 20px 0;
+      font-size:1.5rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .field{
+      margin:20px 0;
+    }
+    .field label{
+      font-size:14px;
+      font-weight: 600;
+      color:var(--text);
+      display:block;
+      margin-bottom:8px;
+    }
+    
+    .slider-container {
+      position: relative;
+      margin: 15px 0;
+    }
+    
+    .slider {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(to right, #e1e8ed 0%, var(--accent) 100%);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+    
+    .slider::-webkit-slider-thumb:hover {
+      background: var(--accent-dark);
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    
+    .slider-value {
+      position: absolute;
+      right: 0;
+      top: -30px;
+      background: var(--accent);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    .input-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .input-field {
+      padding: 12px 15px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: var(--text);
+      transition: border-color 0.2s ease;
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap:15px;
+      margin: 20px 0;
+    }
+    
+    .stat{
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:15px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .stat:hover {
+      transform: translateY(-2px);
+    }
+    
+    .stat .label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat .value{
+      font-size:1.5rem;
+      margin-top:5px;
+      font-weight:700;
+      color: var(--text);
+    }
+    .stat .unit {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin: 20px 0;
+    }
+    
+    canvas{
+      display:block;
+      width:100% !important;
+      height:auto !important;
+      max-width:100%;
+    }
+    
+    .btn{
+      appearance:none;
+      border:none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color:#fff;
+      padding:12px 24px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    }
+    
+    .btn.secondary{
+      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+      box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+    }
+    .btn.secondary:hover {
+      box-shadow: 0 6px 16px rgba(149, 165, 166, 0.4);
+    }
+    
+    .warning-badge {
+      background: var(--warning);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    
+    .success-badge {
+      background: var(--success);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    
+    .note{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:15px;
+      padding: 12px;
+      background: rgba(52, 152, 219, 0.1);
+      border-radius: 6px;
+      border-left: 4px solid var(--accent);
+    }
+    
+    @media (max-width: 768px) {
+      .container { padding: 15px; }
+      header h1 { font-size: 2rem; }
+      .input-group { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>Power Plant Ramp Rate</h1>
+  <div class="container">
+    <header>
+      <h1>Power Plant Ramp Rate Optimizer</h1>
+      <p>Design and optimize ramp rates for active (P) and reactive (Q) power transitions. Visualize plant performance from 100% to 0% output.</p>
+    </header>
 
-  <div class="control-group">
-    <label for="mwSlider">Plant Size (MW): <span id="mwValue" class="value">50</span></label>
-    <input type="range" id="mwSlider" min="1" max="500" step="1" value="50">
+    <main>
+      <section class="card" id="inputsCard">
+        <h2>Plant Configuration</h2>
+        
+        <div class="field">
+          <label>Plant Size (MW)</label>
+          <div class="slider-container">
+            <input type="range" id="plantSize" class="slider" min="1" max="1000" value="100" step="1">
+            <div class="slider-value" id="plantSizeValue">100 MW</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Power Factor</label>
+          <div class="slider-container">
+            <input type="range" id="powerFactor" class="slider" min="0.7" max="1.0" value="0.95" step="0.01">
+            <div class="slider-value" id="powerFactorValue">0.95</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Active Power Ramp Rate (%/sec)</label>
+          <div class="slider-container">
+            <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.1">
+            <div class="slider-value" id="pRampRateValue">5.0 %/sec</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Reactive Power Ramp Rate (%/sec)</label>
+          <div class="slider-container">
+            <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.1">
+            <div class="slider-value" id="qRampRateValue">3.0 %/sec</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ramp Direction</label>
+          <div class="input-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="radio" name="direction" value="down" checked>
+              <span>Ramp Down (100% → 0%)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="radio" name="direction" value="up">
+              <span>Ramp Up (0% → 100%)</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:15px;margin-top:25px">
+          <button class="btn" id="updateBtn">Update Ramp Profile</button>
+          <button class="btn secondary" id="resetBtn">Reset to Defaults</button>
+        </div>
+
+        <div class="note">
+          <strong>Tip:</strong> Faster ramp rates provide quicker response but may stress equipment. 
+          Slower rates are gentler but take longer to complete transitions.
+        </div>
+      </section>
+
+      <section class="card" id="resultsCard">
+        <h2>Ramp Analysis</h2>
+        
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="label">Active Power</div>
+            <div class="value" id="activePowerValue">100</div>
+            <div class="unit">MW</div>
+          </div>
+          <div class="stat">
+            <div class="label">Reactive Power</div>
+            <div class="value" id="reactivePowerValue">33</div>
+            <div class="unit">Mvar</div>
+          </div>
+          <div class="stat">
+            <div class="label">P Ramp Time</div>
+            <div class="value" id="pRampTimeValue">20</div>
+            <div class="unit">seconds</div>
+          </div>
+          <div class="stat">
+            <div class="label">Q Ramp Time</div>
+            <div class="value" id="qRampTimeValue">33</div>
+            <div class="unit">seconds</div>
+          </div>
+        </div>
+
+        <div id="rampStatus"></div>
+
+        <div class="chart-container">
+          <canvas id="rampChart" height="300"></canvas>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="label">Total Ramp Time</div>
+            <div class="value" id="totalTimeValue">33</div>
+            <div class="unit">seconds</div>
+          </div>
+          <div class="stat">
+            <div class="label">P/Q Ratio</div>
+            <div class="value" id="pqRatioValue">1.67</div>
+            <div class="unit">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Power Factor</div>
+            <div class="value" id="displayPfValue">0.95</div>
+            <div class="unit">leading/lagging</div>
+          </div>
+          <div class="stat">
+            <div class="label">Apparent Power</div>
+            <div class="value" id="apparentPowerValue">105</div>
+            <div class="unit">MVA</div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <div class="control-group">
-    <label for="pfInput">Power Factor: <span id="pfValue" class="value">0.98</span></label>
-    <input type="number" id="pfInput" min="0.8" max="1" step="0.01" value="0.98">
-  </div>
-
-  <div class="control-group">
-    <label for="rampPSlider">Ramp Rate P (%/sec): <span id="rampPValue" class="value">10</span></label>
-    <input type="range" id="rampPSlider" min="0.1" max="50" step="0.1" value="10">
-  </div>
-
-  <div class="control-group">
-    <label for="rampQSlider">Ramp Rate Q (%/sec): <span id="rampQValue" class="value">10</span></label>
-    <input type="range" id="rampQSlider" min="0.1" max="50" step="0.1" value="10">
-  </div>
-
-  <div id="chartContainer">
-    <canvas id="rampChart"></canvas>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    const mwSlider = document.getElementById('mwSlider');
-    const pfInput = document.getElementById('pfInput');
-    const rampPSlider = document.getElementById('rampPSlider');
-    const rampQSlider = document.getElementById('rampQSlider');
+    // State management
+    let state = {
+      plantSize: 100,
+      powerFactor: 0.95,
+      pRampRate: 5.0,
+      qRampRate: 3.0,
+      direction: 'down'
+    };
 
-    const mwValue = document.getElementById('mwValue');
-    const pfValue = document.getElementById('pfValue');
-    const rampPValue = document.getElementById('rampPValue');
-    const rampQValue = document.getElementById('rampQValue');
+    let rampChart = null;
 
-    function pfToQ(p, pf) {
-      const theta = Math.acos(pf);
-      return p * Math.tan(theta);
+    // Utility functions
+    const formatNumber = (value, decimals = 1) => {
+      return Number(value).toFixed(decimals);
+    };
+
+    const calculateReactivePower = (activePower, powerFactor) => {
+      const reactiveComponent = Math.sqrt(1 - powerFactor * powerFactor);
+      return activePower * reactiveComponent / powerFactor;
+    };
+
+    const calculateApparentPower = (activePower, reactivePower) => {
+      return Math.sqrt(activePower * activePower + reactivePower * reactivePower);
+    };
+
+    // Update slider values display
+    function updateSliderValues() {
+      document.getElementById('plantSizeValue').textContent = `${state.plantSize} MW`;
+      document.getElementById('powerFactorValue').textContent = formatNumber(state.powerFactor, 2);
+      document.getElementById('pRampRateValue').textContent = `${formatNumber(state.pRampRate)} %/sec`;
+      document.getElementById('qRampRateValue').textContent = `${formatNumber(state.qRampRate)} %/sec`;
     }
 
-    function generateRampData(Pmax, Qmax, rampP, rampQ) {
-      const timeP = 100 / rampP;
-      const timeQ = 100 / rampQ;
-      const totalT = Math.max(timeP, timeQ);
-      const steps = Math.ceil(totalT * 4);
-      const labels = [];
-      const dataP = [];
-      const dataQ = [];
+    // Calculate ramp profile
+    function calculateRampProfile() {
+      const reactivePower = calculateReactivePower(state.plantSize, state.powerFactor);
+      const apparentPower = calculateApparentPower(state.plantSize, reactivePower);
+      
+      // Calculate ramp times (time to go from 100% to 0% or vice versa)
+      const pRampTime = 100 / state.pRampRate; // seconds
+      const qRampTime = 100 / state.qRampRate; // seconds
+      const totalRampTime = Math.max(pRampTime, qRampTime);
 
-      for (let i = 0; i <= steps; i++) {
-        const t = (i * totalT) / steps;
-        const percentP = Math.max(100 - rampP * t, 0);
-        const percentQ = Math.max(100 - rampQ * t, 0);
-        labels.push(t.toFixed(2));
-        dataP.push((Pmax * percentP / 100).toFixed(2));
-        dataQ.push((Qmax * percentQ / 100).toFixed(2));
+      // Update statistics
+      document.getElementById('activePowerValue').textContent = formatNumber(state.plantSize);
+      document.getElementById('reactivePowerValue').textContent = formatNumber(reactivePower);
+      document.getElementById('pRampTimeValue').textContent = formatNumber(pRampTime);
+      document.getElementById('qRampTimeValue').textContent = formatNumber(qRampTime);
+      document.getElementById('totalTimeValue').textContent = formatNumber(totalRampTime);
+      document.getElementById('pqRatioValue').textContent = formatNumber(state.pRampRate / state.qRampRate, 2);
+      document.getElementById('displayPfValue').textContent = formatNumber(state.powerFactor, 2);
+      document.getElementById('apparentPowerValue').textContent = formatNumber(apparentPower);
+
+      // Update status badges
+      const statusContainer = document.getElementById('rampStatus');
+      statusContainer.innerHTML = '';
+      
+      if (pRampTime > qRampTime + 5) {
+        statusContainer.innerHTML = '<div class="warning-badge">⚠️ P ramp significantly slower than Q</div>';
+      } else if (qRampTime > pRampTime + 5) {
+        statusContainer.innerHTML = '<div class="warning-badge">⚠️ Q ramp significantly slower than P</div>';
+      } else {
+        statusContainer.innerHTML = '<div class="success-badge">✓ Well-balanced P and Q ramp rates</div>';
       }
 
-      return { labels, dataP, dataQ };
+      return {
+        reactivePower,
+        apparentPower,
+        pRampTime,
+        qRampTime,
+        totalRampTime
+      };
     }
 
-    const ctx = document.getElementById('rampChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
+    // Generate chart data
+    function generateChartData() {
+      const calc = calculateRampProfile();
+      const timeStep = 0.5; // seconds
+      const maxTime = Math.ceil(calc.totalRampTime / timeStep) * timeStep;
+      
+      const timePoints = [];
+      const pPowerPoints = [];
+      const qPowerPoints = [];
+      const totalPowerPoints = [];
+
+      for (let t = 0; t <= maxTime; t += timeStep) {
+        timePoints.push(t);
+        
+        let pPercent, qPercent;
+        
+        if (state.direction === 'down') {
+          // Ramp down from 100% to 0%
+          pPercent = Math.max(0, 100 - (state.pRampRate * t));
+          qPercent = Math.max(0, 100 - (state.qRampRate * t));
+        } else {
+          // Ramp up from 0% to 100%
+          pPercent = Math.min(100, state.pRampRate * t);
+          qPercent = Math.min(100, state.qRampRate * t);
+        }
+        
+        const pPower = (pPercent / 100) * state.plantSize;
+        const qPower = (qPercent / 100) * calc.reactivePower;
+        const totalPower = calculateApparentPower(pPower, qPower);
+        
+        pPowerPoints.push(pPower);
+        qPowerPoints.push(qPower);
+        totalPowerPoints.push(totalPower);
+      }
+
+      return {
+        timePoints,
+        pPowerPoints,
+        qPowerPoints,
+        totalPowerPoints,
+        maxTime
+      };
+    }
+
+    // Update chart
+    function updateChart() {
+      const chartData = generateChartData();
+      
+      const data = {
+        labels: chartData.timePoints,
         datasets: [
           {
-            label: 'Active Power (MW)',
-            data: [],
-            borderWidth: 2,
-            fill: false
+            label: 'Active Power (P)',
+            data: chartData.pPowerPoints,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            fill: false,
+            tension: 0.1,
+            borderWidth: 3
           },
           {
-            label: 'Reactive Power (MVAr)',
-            data: [],
+            label: 'Reactive Power (Q)',
+            data: chartData.qPowerPoints,
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            fill: false,
+            tension: 0.1,
+            borderWidth: 3
+          },
+          {
+            label: 'Apparent Power (S)',
+            data: chartData.totalPowerPoints,
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            fill: true,
+            tension: 0.1,
             borderWidth: 2,
-            fill: false
+            borderDash: [5, 5]
           }
         ]
-      },
-      options: {
+      };
+
+      const options = {
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: `Power Ramp Profile - ${state.direction === 'down' ? '100% → 0%' : '0% → 100%'}`,
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          },
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          }
+        },
         scales: {
-          x: { title: { display: true, text: 'Time (s)' } },
-          y: { title: { display: true, text: 'Output (MW/MVAr)' } }
+          x: {
+            title: {
+              display: true,
+              text: 'Time (seconds)',
+              font: {
+                size: 14,
+                weight: 'bold'
+              }
+            },
+            grid: {
+              alpha: 0.3
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Power (MW/Mvar/MVA)',
+              font: {
+                size: 14,
+                weight: 'bold'
+              }
+            },
+            beginAtZero: true,
+            grid: {
+              alpha: 0.3
+            }
+          }
+        },
+        elements: {
+          point: {
+            radius: 0,
+            hoverRadius: 6
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index'
         }
+      };
+
+      if (rampChart) {
+        rampChart.destroy();
       }
-    });
 
-    function updateChart() {
-      const Pmax = parseFloat(mwSlider.value);
-      const pf = parseFloat(pfInput.value);
-      const Qmax = pfToQ(Pmax, pf);
-      const rampP = parseFloat(rampPSlider.value);
-      const rampQ = parseFloat(rampQSlider.value);
-
-      mwValue.textContent = Pmax;
-      pfValue.textContent = pf.toFixed(2);
-      rampPValue.textContent = rampP;
-      rampQValue.textContent = rampQ;
-
-      const { labels, dataP, dataQ } = generateRampData(Pmax, Qmax, rampP, rampQ);
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = dataP;
-      chart.data.datasets[1].data = dataQ;
-      chart.update();
+      const ctx = document.getElementById('rampChart').getContext('2d');
+      rampChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: options
+      });
     }
 
-    [mwSlider, pfInput, rampPSlider, rampQSlider].forEach(el => {
-      el.addEventListener('input', updateChart);
-    });
+    // Event listeners for sliders
+    function setupEventListeners() {
+      document.getElementById('plantSize').addEventListener('input', (e) => {
+        state.plantSize = parseFloat(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
 
-    updateChart();
+      document.getElementById('powerFactor').addEventListener('input', (e) => {
+        state.powerFactor = parseFloat(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+
+      document.getElementById('pRampRate').addEventListener('input', (e) => {
+        state.pRampRate = parseFloat(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+
+      document.getElementById('qRampRate').addEventListener('input', (e) => {
+        state.qRampRate = parseFloat(e.target.value);
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+
+      document.querySelectorAll('input[name="direction"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.direction = e.target.value;
+          updateChart();
+        });
+      });
+
+      document.getElementById('updateBtn').addEventListener('click', () => {
+        calculateRampProfile();
+        updateChart();
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        // Reset to defaults
+        state = {
+          plantSize: 100,
+          powerFactor: 0.95,
+          pRampRate: 5.0,
+          qRampRate: 3.0,
+          direction: 'down'
+        };
+        
+        // Update sliders
+        document.getElementById('plantSize').value = state.plantSize;
+        document.getElementById('powerFactor').value = state.powerFactor;
+        document.getElementById('pRampRate').value = state.pRampRate;
+        document.getElementById('qRampRate').value = state.qRampRate;
+        document.querySelector('input[name="direction"][value="down"]').checked = true;
+        
+        updateSliderValues();
+        calculateRampProfile();
+        updateChart();
+      });
+    }
+
+    // Initialize the application
+    function init() {
+      updateSliderValues();
+      calculateRampProfile();
+      updateChart();
+      setupEventListeners();
+    }
+
+    // Start the app when DOM is ready
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
