@@ -370,7 +370,7 @@
           <label>Active Power Ramp Rate (%/sec)</label>
           <div class="slider-container">
             <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.01">
-            <input type="text" id="pRampRateValue" class="slider-value-input" value="5.00 %/sec">
+            <input type="text" id="pRampRateValue" class="slider-value-input" value="5.00 %/s">
           </div>
         </div>
 
@@ -378,7 +378,7 @@
           <label>Reactive Power Ramp Rate (%/sec)</label>
           <div class="slider-container">
             <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.01">
-            <input type="text" id="qRampRateValue" class="slider-value-input" value="3.00 %/sec">
+            <input type="text" id="qRampRateValue" class="slider-value-input" value="3.00 %/s">
           </div>
         </div>
 
@@ -500,13 +500,13 @@
     function updateSliderValues() {
       document.getElementById('plantSizeValue').textContent = `${state.plantSize} MW`;
       document.getElementById('powerFactorValue').textContent = formatNumber(state.powerFactor, 2);
-      document.getElementById('pRampRateValue').value = `${formatNumber(state.pRampRate, 2)} %/sec`;
-      document.getElementById('qRampRateValue').value = `${formatNumber(state.qRampRate, 2)} %/sec`;
+      document.getElementById('pRampRateValue').value = `${formatNumber(state.pRampRate, 2)} %/s`;
+      document.getElementById('qRampRateValue').value = `${formatNumber(state.qRampRate, 2)} %/s`;
     }
 
     // Parse value from editable slider value input
     function parseRampRateValue(inputValue) {
-      // Extract number from "5.00 %/sec" format
+      // Extract number from "5.00 %/s" format
       const match = inputValue.match(/^([0-9]*\.?[0-9]+)/);
       return match ? parseFloat(match[1]) : null;
     }
