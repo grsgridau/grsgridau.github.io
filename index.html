@@ -168,6 +168,36 @@
       text-align: center;
     }
     
+    .slider-input-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .slider-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    
+    .manual-input {
+      width: 120px;
+      padding: 8px 12px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: var(--text);
+      text-align: center;
+      transition: border-color 0.2s ease;
+    }
+    
+    .manual-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
     .input-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -338,17 +368,23 @@
 
         <div class="field">
           <label>Active Power Ramp Rate (%/sec)</label>
-          <div class="slider-container">
-            <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.1">
-            <div class="slider-value" id="pRampRateValue">5.0 %/sec</div>
+          <div class="slider-input-container">
+            <div class="slider-wrapper">
+              <input type="range" id="pRampRate" class="slider" min="0.1" max="20" value="5" step="0.01">
+              <div class="slider-value" id="pRampRateValue">5.00 %/sec</div>
+            </div>
+            <input type="number" id="pRampRateInput" class="manual-input" min="0.1" max="20" step="0.01" value="5.00" placeholder="5.00">
           </div>
         </div>
 
         <div class="field">
           <label>Reactive Power Ramp Rate (%/sec)</label>
-          <div class="slider-container">
-            <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.1">
-            <div class="slider-value" id="qRampRateValue">3.0 %/sec</div>
+          <div class="slider-input-container">
+            <div class="slider-wrapper">
+              <input type="range" id="qRampRate" class="slider" min="0.1" max="20" value="3" step="0.01">
+              <div class="slider-value" id="qRampRateValue">3.00 %/sec</div>
+            </div>
+            <input type="number" id="qRampRateInput" class="manual-input" min="0.1" max="20" step="0.01" value="3.00" placeholder="3.00">
           </div>
         </div>
 
@@ -441,16 +477,20 @@
     let state = {
       plantSize: 100,
       powerFactor: 0.95,
-      pRampRate: 5.0,
-      qRampRate: 3.0,
+      pRampRate: 5.00,
+      qRampRate: 3.00,
       direction: 'down'
     };
 
     let rampChart = null;
 
     // Utility functions
-    const formatNumber = (value, decimals = 1) => {
+    const formatNumber = (value, decimals = 2) => {
       return Number(value).toFixed(decimals);
+    };
+
+    const clamp = (value, min, max) => {
+      return Math.max(min, Math.min(max, value));
     };
 
     const calculateReactivePower = (activePower, powerFactor) => {
@@ -466,8 +506,36 @@
     function updateSliderValues() {
       document.getElementById('plantSizeValue').textContent = `${state.plantSize} MW`;
       document.getElementById('powerFactorValue').textContent = formatNumber(state.powerFactor, 2);
-      document.getElementById('pRampRateValue').textContent = `${formatNumber(state.pRampRate)} %/sec`;
-      document.getElementById('qRampRateValue').textContent = `${formatNumber(state.qRampRate)} %/sec`;
+      document.getElementById('pRampRateValue').textContent = `${formatNumber(state.pRampRate, 2)} %/sec`;
+      document.getElementById('qRampRateValue').textContent = `${formatNumber(state.qRampRate, 2)} %/sec`;
+      
+      // Update manual input fields
+      document.getElementById('pRampRateInput').value = formatNumber(state.pRampRate, 2);
+      document.getElementById('qRampRateInput').value = formatNumber(state.qRampRate, 2);
+    }
+
+    // Sync slider and input values
+    function syncRampRateValues(source, isP = true) {
+      const sliderElement = document.getElementById(isP ? 'pRampRate' : 'qRampRate');
+      const inputElement = document.getElementById(isP ? 'pRampRateInput' : 'qRampRateInput');
+      
+      let value = parseFloat(source.value);
+      value = clamp(value, 0.1, 20);
+      value = Math.round(value * 100) / 100; // Round to 2 decimal places
+      
+      if (isP) {
+        state.pRampRate = value;
+      } else {
+        state.qRampRate = value;
+      }
+      
+      // Update both slider and input to the clamped/rounded value
+      sliderElement.value = value;
+      inputElement.value = formatNumber(value, 2);
+      
+      updateSliderValues();
+      calculateRampProfile();
+      updateChart();
     }
 
     // Calculate ramp profile
@@ -682,18 +750,42 @@
         updateChart();
       });
 
+      // P Ramp Rate - Slider
       document.getElementById('pRampRate').addEventListener('input', (e) => {
-        state.pRampRate = parseFloat(e.target.value);
-        updateSliderValues();
-        calculateRampProfile();
-        updateChart();
+        syncRampRateValues(e.target, true);
       });
 
+      // P Ramp Rate - Manual Input
+      document.getElementById('pRampRateInput').addEventListener('input', (e) => {
+        syncRampRateValues(e.target, true);
+      });
+
+      document.getElementById('pRampRateInput').addEventListener('blur', (e) => {
+        // Ensure value is properly formatted on blur
+        const value = clamp(parseFloat(e.target.value) || 0.1, 0.1, 20);
+        e.target.value = formatNumber(value, 2);
+        if (state.pRampRate !== value) {
+          syncRampRateValues(e.target, true);
+        }
+      });
+
+      // Q Ramp Rate - Slider
       document.getElementById('qRampRate').addEventListener('input', (e) => {
-        state.qRampRate = parseFloat(e.target.value);
-        updateSliderValues();
-        calculateRampProfile();
-        updateChart();
+        syncRampRateValues(e.target, false);
+      });
+
+      // Q Ramp Rate - Manual Input
+      document.getElementById('qRampRateInput').addEventListener('input', (e) => {
+        syncRampRateValues(e.target, false);
+      });
+
+      document.getElementById('qRampRateInput').addEventListener('blur', (e) => {
+        // Ensure value is properly formatted on blur
+        const value = clamp(parseFloat(e.target.value) || 0.1, 0.1, 20);
+        e.target.value = formatNumber(value, 2);
+        if (state.qRampRate !== value) {
+          syncRampRateValues(e.target, false);
+        }
       });
 
       document.querySelectorAll('input[name="direction"]').forEach(radio => {
@@ -713,16 +805,18 @@
         state = {
           plantSize: 100,
           powerFactor: 0.95,
-          pRampRate: 5.0,
-          qRampRate: 3.0,
+          pRampRate: 5.00,
+          qRampRate: 3.00,
           direction: 'down'
         };
         
-        // Update sliders
+        // Update sliders and inputs
         document.getElementById('plantSize').value = state.plantSize;
         document.getElementById('powerFactor').value = state.powerFactor;
         document.getElementById('pRampRate').value = state.pRampRate;
         document.getElementById('qRampRate').value = state.qRampRate;
+        document.getElementById('pRampRateInput').value = formatNumber(state.pRampRate, 2);
+        document.getElementById('qRampRateInput').value = formatNumber(state.qRampRate, 2);
         document.querySelector('input[name="direction"][value="down"]').checked = true;
         
         updateSliderValues();
